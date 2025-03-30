@@ -1,10 +1,12 @@
-//reroutes default ad websites
-browser.webRequest.onBeforeRequest.addListener(
-    function(details) {
-      if (details.url.includes("doubleclick.net") || details.url.includes("googleads.g.doubleclick.net")) {
-        return {cancel: true};
-      }
-    },
-    {urls: ["*://*/*"]},
-    ["blocking"]
-  );
+chrome.declarativeNetRequest.updateDynamicRules({
+  addRules: [{
+    'id': 1,
+    'priority': 1,
+    'action': { 'type': 'block' },
+    'condition': {
+      'urlFilter': 'doubleclick.net|googleads.g.doubleclick.net|adservice.google.com|ads.yahoo.com|pagead2.googlesyndication.com',
+      'resourceTypes': ['script', 'xmlhttprequest', 'sub_frame', 'image']
+    }
+  }],
+  removeRuleIds: [1]
+});

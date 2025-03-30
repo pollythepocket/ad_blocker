@@ -3,7 +3,7 @@
     "name": "My Ad Blocker",
     "version": "1.0",
     "description": "A simple YouTube ad blocker",
-    "permissions": ["webRequest", "webRequestBlocking", "<all_urls>"],
+    "permissions": ["declarativeNetRequest"],
     "background": {
       "service_worker": "background.js"
     },
@@ -14,7 +14,7 @@
       }
     ],
     "action": {
-        "default_popup": "popup.html",
-        "default_icon": "icon.png"
+        "default_popup": "popup/popup.html",
+        "default_icon": "images/icon.png"
     }
   }
