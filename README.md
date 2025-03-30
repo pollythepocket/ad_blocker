@@ -5,6 +5,7 @@ Makeshift Ad Blocker was created in response to many of my favorite ad blockers 
 I am quite new to this type of programming, so I apologize if someone feels this is not optimal. Feel free to DM me on [LinkedIn](https://www.linkedin.com/in/polly-ruhnke-573440224/) or submit an error here.
 
 ### Disclaimer
+
 Version one is still being programmed.
 
 ### Icon Design Disclaimer

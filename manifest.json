@@ -1,20 +1,20 @@
 {
-    "manifest_version": 3,
-    "name": "My Ad Blocker",
-    "version": "1.0",
-    "description": "A simple YouTube ad blocker",
-    "permissions": ["declarativeNetRequest"],
-    "background": {
-      "service_worker": "background.js"
-    },
-    "content_scripts": [
-      {
-        "matches": ["https://*.youtube.com/*"],
-        "js": ["scripts/youtube.js"]
-      }
-    ],
-    "action": {
-        "default_popup": "popup/popup.html",
-        "default_icon": "images/icon.png"
+  "manifest_version": 3,
+  "name": "My Ad Blocker",
+  "version": "1.0",
+  "description": "A simple YouTube ad blocker",
+  "permissions": ["declarativeNetRequest"],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://*.youtube.com/*"],
+      "js": ["scripts/youtube.js"]
     }
+  ],
+  "action": {
+    "default_popup": "popup/popup.html",
+    "default_icon": "images/icon.png"
   }
+}
