@@ -1,0 +1,16 @@
+{
+    "manifest_version": 3,
+    "name": "My Ad Blocker",
+    "version": "1.0",
+    "description": "A simple YouTube ad blocker",
+    "permissions": ["webRequest", "webRequestBlocking", "<all_urls>"],
+    "background": {
+      "service_worker": "background.js"
+    },
+    "content_scripts": [
+      {
+        "matches": ["https://*.youtube.com/*"],
+        "js": ["content.js"]
+      }
+    ]
+  }
