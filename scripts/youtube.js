@@ -19,12 +19,9 @@ function videoPlaying() {
 }
 
 function skipButton() {
-  const skipButton = document.querySelector(".skip-button");
+  const skipButton = document.querySelector("ytp-ad-skip-button");
   if (skipButton) {
-    skipButton.addEventListener("click", async () => {
-      const [tab] = await chrome.tabs.query({ active: true });
-      await chrome.tabs.sendMessage(tab.id, { action: "skip" });
-    });
+    skipButton.click();
   }
 }
 

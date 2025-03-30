@@ -1,0 +1,38 @@
+:root {
+  --medium-blue: #2596be;
+  --light-green: #7ed957;
+  --dark-green: #00bf63;
+  --primary-surface-color: #2c2e31;
+}
+
+body {
+  background-color: var(--primary-surface-color) !important;
+  font-family: "Roboto", sans-serif !important;
+}
+
+.top {
+  border-radius: 1px;
+  box-shadow: 0 4px 8px rgba(10, 10, 10, 0.2);
+
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  overflow: hidden;
+  gap: 10px;
+  width: 100%;
+}
+
+.top h3 {
+  flex-grow: 1;
+  text-align: center;
+  margin: 0;
+  white-space: nowrap;
+  color: white;
+}
+
+#img {
+  height: auto;
+  width: auto;
+  max-width: 15px;
+  max-height: 15px;
+}
