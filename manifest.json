@@ -3,7 +3,7 @@
   "name": "Makeshift Ad Blocker",
   "version": "1.0",
   "description": "A simple YouTube ad blocker",
-  "permissions": ["declarativeNetRequest"],
+  "permissions": ["declarativeNetRequest", "storage"],
   "background": {
     "service_worker": "background.js"
   },
