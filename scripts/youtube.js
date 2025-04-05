@@ -10,32 +10,24 @@ function isToggle(callback) {
 function videoPlaying() {
   console.log("Checking for ads...");
 
-  const selectors = [".ytp-ad-skip-button", ".ytp-ad-skip-button-modern"];
+  // Try to click the skip ad button
+  const skipButton = document.querySelector(".ytp-skip-ad-button");
+  if (skipButton && !skipButton.disabled && skipButton.offsetParent !== null) {
+    console.log("Skip button found and clickable", skipButton);
+    simulateClick(skipButton);
+  } else {
+    skipButton.style.pointerEvents = "auto";
+    skipButton.style.opacity = "1";
+    skipButton.removeAttribute("disabled");
+  }
 
-  selectors.forEach((selector) => {
-    const skipButtons = document.querySelectorAll(selector);
-    skipButtons.forEach((skipButton) => {
-      if (
-        skipButton &&
-        skipButton.offsetParent !== null &&
-        !skipButton.disabled
-      ) {
-        console.log("Skip button found and clickable", skipButton);
-        skipButton.click();
-      } else if (skipButton && skipButton.offsetParent === null) {
-        skipButton.style.pointerEvents = "auto";
-        skipButton.style.opacity = "1";
-        skipButton.removeAttribute("disabled");
-        skipButton.classList.add("ytp-ad-skip-button-modern", "ytp-button");
-      }
-    });
-  });
-
-  //hides overlay ads
-  const overlayAds = document.querySelectorAll(".ytp-ad-overlay-slot");
-  overlayAds.forEach((overlayAd) => {
-    overlayAd.style.visibility = "hidden";
-  });
+  const overlayCloseButton = document.querySelector(
+    ".ytp-ad-overlay-close-button",
+  );
+  if (overlayCloseButton) {
+    console.log("Overlay close button found", overlayCloseButton);
+    overlayCloseButton.click();
+  }
 }
 
 function handleToggle(toggle) {
