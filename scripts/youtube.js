@@ -8,40 +8,34 @@ function isToggle(callback) {
 }
 
 function videoPlaying() {
-  const defined = (v) => v !== null && v !== undefined;
-  let timeout;
+  console.log("Checking for ads...");
 
-  const ad = [...document.querySelectorAll(".ad-showing")][0];
-  const video = document.querySelector("video");
+  const selectors = [".ytp-ad-skip-button", ".ytp-ad-skip-button-modern"];
 
-  if (defined(ad) && defined(video) && isFinite(video.duration)) {
-    video.muted = true;
-
-    if (video.paused || video.ended) {
-      if (video.currentTime < video.duration) {
-        video.currentTime = video.duration;
-      }
-      video.play().catch((err) => {
-        console.error("Play error:", err); //keep getting error when ad comes
-      });
-    }
-  }
-
-  return function () {
-    clearInterval(timeout);
-  };
-}
-
-function skipButton() {
-  const skipButtons = document.querySelectorAll(
-    ".ytp-ad-skip-button button.ytp-ad-skip-button-modern .ytp-button",
-  );
-  console.log("skipped", skipButtons);
-  if (skipButtons) {
+  selectors.forEach((selector) => {
+    const skipButtons = document.querySelectorAll(selector);
     skipButtons.forEach((skipButton) => {
-      skipButton.click();
+      if (
+        skipButton &&
+        skipButton.offsetParent !== null &&
+        !skipButton.disabled
+      ) {
+        console.log("Skip button found and clickable", skipButton);
+        skipButton.click();
+      } else if (skipButton && skipButton.offsetParent === null) {
+        skipButton.style.pointerEvents = "auto";
+        skipButton.style.opacity = "1";
+        skipButton.removeAttribute("disabled");
+        skipButton.classList.add("ytp-ad-skip-button-modern", "ytp-button");
+      }
     });
-  }
+  });
+
+  //hides overlay ads
+  const overlayAds = document.querySelectorAll(".ytp-ad-overlay-slot");
+  overlayAds.forEach((overlayAd) => {
+    overlayAd.style.visibility = "hidden";
+  });
 }
 
 function handleToggle(toggle) {
@@ -52,7 +46,7 @@ function handleToggle(toggle) {
 
   const allAds = [...adElements, ...exisitingIds];
 
-  console.log(allAds);
+  // console.log(allAds);
 
   if (allAds.length > 0) {
     requestAnimationFrame(() => {
@@ -75,8 +69,12 @@ function handleToggle(toggle) {
   }
 
   if (toggle) {
-    videoPlaying();
-    skipButton();
+    let adCheckInterval = setInterval(() => {
+      if (document.querySelector(".ytp-skip-ad-button")) {
+        videoPlaying();
+        clearInterval(adCheckInterval);
+      }
+    }, 500);
   }
 }
 
