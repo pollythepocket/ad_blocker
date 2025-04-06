@@ -1,5 +1,3 @@
-//TODO: delete debugging functions before first deployment
-
 //retrieve toggle state
 function isToggle(callback) {
   chrome.storage.sync.get("toggle", function (data) {
@@ -65,6 +63,7 @@ async function parseFile(file) {
   console.log("Adblock rules updated:", rules.length);
 }
 
+//turns on quick restrictions
 async function toggleOn() {
   const folders = await getAllFilesFromRepo();
 
@@ -145,17 +144,18 @@ function sendDebuggerCommand(tabId, method, params) {
 async function attachDebugger(tabId) {
   await new Promise((resolve) => {
     chrome.debugger.attach({ tabId }, "1.2", resolve);
-    console.log("Debugger attached.");
+    console.log(`Debugger Detached from tab ${tabId}`);
   });
 }
 
 async function detachDebugger(tabId) {
   await new Promise((resolve) => {
     chrome.debugger.detach({ tabId }, resolve);
-    console.log(`Detached from tab ${tabId}`);
+    console.log(`Debugger Attached from tab ${tabId}`);
   });
 }
 
+//run async so everything actually runs only once
 async function clickWithDebugger(tabId, msg, sendResponse) {
   try {
     await attachDebugger(tabId);

@@ -1,8 +1,5 @@
-//TODO: delete debugger functions, delete logging, make video play after ad
 // then figure which easy stuff to use
 // then find more stuff for more ads
-// maybe skipping all ad vid??
-//when debugger attaches make sure it doesnt do a pop-up
 
 let previousToggleState = null;
 let isHandlingToggle = false;
@@ -34,18 +31,17 @@ function simulateClickWithDebugger(targetElement) {
   const x = rect.left + rect.width / 2;
   const y = rect.top + rect.height / 2;
 
-  chrome.runtime.sendMessage(
-    { text: "click-button-chrome-way", rect: rect, x: x, y: y },
-    (finished) => {
-      console.log("We finished? ", finished); //TODO: delete or catch error
-    },
-  );
+  chrome.runtime.sendMessage({
+    text: "click-button-chrome-way",
+    rect: rect,
+    x: x,
+    y: y,
+  });
 }
 
 //checking to see if video is playing
 async function videoPlaying() {
   const isAd = document.querySelector(".ad-showing");
-  console.log(isAd ? "Ad is playing" : "No ad detected");
 
   const video = document.querySelector("video");
   if (isAd && video && isFinite(video)) {
