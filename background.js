@@ -5,9 +5,11 @@ function isToggle(callback) {
   });
 }
 
+//this gets all of the files from a github repo itself, with the lists of urls
 async function getAllFilesFromRepo() {
   //all easylist urls
   const urls = [
+    "https://api.github.com/repos/uBlockOrigin/uAssets/contents/filters",
     "https://api.github.com/repos/easylist/easylist/contents/easylist",
     "https://api.github.com/repos/easylist/easylist/contents/easylist_adult",
     "https://api.github.com/repos/easylist/easylist/contents/easyprivacy",
@@ -19,7 +21,7 @@ async function getAllFilesFromRepo() {
   return data;
 }
 
-async function parseFile(file) {
+async function parseEasyFile(file) {
   function parseEasyListToDNRRules(easyListText) {
     const lines = easyListText
       .split("\n")
@@ -47,7 +49,6 @@ async function parseFile(file) {
     return rules;
   }
 
-  console.log(file.download_url);
   const res = await fetch(file.download_url);
   const text = await res.text();
 
@@ -67,7 +68,7 @@ async function toggleOn() {
 
   for (const folder of folders) {
     for (const file of folder) {
-      await parseFile(file);
+      await parseEasyFile(file);
     }
   }
 }
