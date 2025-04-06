@@ -6,6 +6,7 @@
 
 let previousToggleState = null;
 let isHandlingToggle = false;
+let isHandlingCheck = false;
 
 //checks to see if user has ad blocker toggled on or off
 function isToggle(callback) {
@@ -42,7 +43,7 @@ function simulateClickWithDebugger(targetElement) {
 }
 
 //checking to see if video is playing
-function videoPlaying() {
+async function videoPlaying() {
   const isAd = document.querySelector(".ad-showing");
   console.log(isAd ? "Ad is playing" : "No ad detected");
 
@@ -54,10 +55,16 @@ function videoPlaying() {
   //if not, force skipbutton to display push it
   const skipButton = document.querySelector(".ytp-skip-ad-button");
   if (skipButton && !skipButton.disabled && skipButton.offsetParent !== null) {
-    simulateClickWithDebugger(skipButton);
+    if (isHandlingCheck) {
+      console.log("videoPlaying is being handled already...skipping");
+      return;
+    }
+
+    isHandlingCheck = true;
+    await simulateClickWithDebugger(skipButton);
     const video = document.querySelector("video");
     if (video) {
-      video.play(); //play video after ad
+      await video.play(); //play video after ad
     }
   } else if (skipButton) {
     skipButton.removeAttribute("aria-hidden");
@@ -65,6 +72,8 @@ function videoPlaying() {
     skipButton.style.setProperty("display", "flex", "important");
     skipButton.style.setProperty("opacity", "1", "important");
   }
+
+  isHandlingCheck = false;
 
   const overlayCloseButton = document.querySelector(
     ".ytp-ad-overlay-close-button",
