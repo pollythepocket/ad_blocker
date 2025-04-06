@@ -1,58 +1,47 @@
-let previousToggleState = null;
-let timeout;
+//TODO: delete debugger functions
 
+let previousToggleState = null;
+let isHandlingToggle = false;
+
+//checks to see if user has ad blocker toggled on or off
 function isToggle(callback) {
   chrome.storage.sync.get("toggle", function (data) {
     callback(data.toggle || false);
   });
 }
 
-function simulateClickWithDebugger(targetElement) {
-  const rect = targetElement.getBoundingClientRect();
-  const x = rect.left + rect.width / 2;
-  const y = rect.top + rect.height / 2;
-
-  chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
-    if (tabs.length === 0) {
-      console.error("No active tab found.");
-      return;
-    }
-
-    const tabId = tabs[0].id;
-    chrome.debugger.attach({ tabId: tabId }, "1.2", function () {
-      chrome.debugger.sendCommand(
-        { tabId: tabId },
-        "Input.dispatchMouseEvent",
-        {
-          type: "mousePressed",
-          button: "left",
-          x: x,
-          y: y,
-          clickCount: 1,
-        },
-      );
-
-      chrome.debugger.sendCommand(
-        { tabId: tabId },
-        "Input.dispatchMouseEvent",
-        {
-          type: "mouseReleased",
-          button: "left",
-          x: x,
-          y: y,
-          clickCount: 1,
-        },
-      );
-    });
-  });
-}
-
-// Log whether a click event was trusted
+//debugging to see if button push was trusted
 function logIfEventIsTrusted(event) {
   console.log("Event isTrusted:", event.isTrusted);
 }
 
-// Function to handle video ad skipping (if vid is playing)
+//gets the target element, since background.js cannot grab DOM, and sends x and y to it
+function simulateClickWithDebugger(targetElement) {
+  console.log(
+    "Received targetElement in simulateClickWithDebugger:",
+    targetElement,
+  );
+
+  if (!targetElement) {
+    console.error("targetElement is undefined or null");
+    return;
+  }
+
+  targetElement.addEventListener("click", logIfEventIsTrusted);
+  const rect = targetElement.getBoundingClientRect();
+  const x = rect.left + rect.width / 2;
+  const y = rect.top + rect.height / 2;
+  console.log("Event listener added.");
+
+  chrome.runtime.sendMessage(
+    { text: "click-button-chrome-way", rect: rect, x: x, y: y },
+    (finished) => {
+      console.log("We finished? ", finished); //TODO: delete or catch error
+    },
+  );
+}
+
+//checking to see if video is playing
 function videoPlaying() {
   console.log("Checking for ads...");
 
@@ -61,13 +50,13 @@ function videoPlaying() {
 
   const video = document.querySelector("video");
   if (isAd && video && isFinite(video)) {
-    video.currentTime = video.duration;
+    video.currentTime = video.duration; //if video is finite, make it skip to the end
   }
 
+  //if not, force skipbutton to display push it
   const skipButton = document.querySelector(".ytp-skip-ad-button");
   if (skipButton && !skipButton.disabled && skipButton.offsetParent !== null) {
     console.log("Skip button found and clickable:", skipButton);
-    skipButton.addEventListener("click", logIfEventIsTrusted);
     simulateClickWithDebugger(skipButton);
   } else if (skipButton) {
     console.log("Skip button found but not clickable:", skipButton);
@@ -82,23 +71,32 @@ function videoPlaying() {
   );
   if (overlayCloseButton) {
     console.log("Overlay close button found:", overlayCloseButton);
-    overlayCloseButton.addEventListener("click", logIfEventIsTrusted);
     overlayCloseButton.click();
   }
 }
 
+//what to do if user said "yes" to adblocker and are on yt (mainly for homepage, tbh)
 function handleToggle(toggle) {
+  if (isHandlingToggle) {
+    //if this function is already running, skip it so as to not run it twice or interrupt
+    console.log("handleToggle is already running. Skipping...");
+    return;
+  }
+
+  isHandlingToggle = true; //set flag to true to indicate it's running
+
+  //all of the stupid class names for ads
   const adElements = document.querySelectorAll(
     ".ytd-in-feed-ad-layout-renderer, .style-scope.ytd-in-feed-ad-layout-renderer .ytd-statement-banner-renderer .style-scope.ytd-statement-banner-renderer .tp-yt-paper-dialog-scrollable .tp-yt-paper-dialog-scrollable .ytwTopBannerImageTextIconButtonedLayoutViewModelHost .style-scope.ytwTopBannerImageTextIconButtonedLayoutViewModelHost .style-scope.ytd-ad-slot-renderer .ytd-ad-slot-renderer",
   );
-  const exisitingIds = document.querySelectorAll("#player-ads");
+  const exisitingIds = document.querySelectorAll("#player-ads"); //all ids for ads
 
   const allAds = [...adElements, ...exisitingIds];
 
   if (allAds.length > 0) {
     requestAnimationFrame(() => {
       allAds.forEach((element) => {
-        const parent = element.closest("ytd-rich-item-renderer");
+        const parent = element.closest("ytd-rich-item-renderer"); //box holding ad video on front page (keeping it leaves black box)
         if (parent) {
           if (toggle) {
             parent.style.display = "none";
@@ -116,10 +114,18 @@ function handleToggle(toggle) {
   }
 
   if (toggle) {
-    videoPlaying();
+    try {
+      videoPlaying();
+    } catch (error) {
+      console.error("Skipping video ad failed"); //you never know
+      isHandlingToggle = false;
+    }
   }
+
+  isHandlingToggle = false; // Set the flag to false when it's done
 }
 
+//watching to see if the toggle changed---TODO make it a listener instead of a timer
 function monitorToggleChange() {
   setInterval(() => {
     isToggle(function (toggle) {
@@ -131,6 +137,7 @@ function monitorToggleChange() {
   }, 500);
 }
 
+//monitors DOM for changes (loading more videos as you scroll, lowkey)
 function monitorDOMChanges() {
   const observer = new MutationObserver(() => {
     isToggle(function (toggle) {
@@ -146,17 +153,30 @@ function monitorDOMChanges() {
   });
 }
 
-monitorToggleChange();
-monitorDOMChanges();
-
-window.addEventListener("load", function () {
-  isToggle(function (toggle) {
-    handleToggle(toggle);
+//runs this the first time it loads
+function runAfterPageLoad() {
+  return new Promise((resolve) => {
+    window.addEventListener("load", () => {
+      isToggle(function (toggle) {
+        handleToggle(toggle);
+      });
+      resolve();
+    });
   });
-});
+}
 
-window.addEventListener("scroll", function () {
-  isToggle(function (toggle) {
-    handleToggle(toggle);
+async function initialize() {
+  await runAfterPageLoad();
+
+  monitorToggleChange();
+  monitorDOMChanges();
+
+  //may be too much, but checks if scroll
+  window.addEventListener("scroll", () => {
+    isToggle(function (toggle) {
+      handleToggle(toggle);
+    });
   });
-});
+}
+
+initialize(); //checks DOM for changes, loading, scrolling, and timer---jeez
