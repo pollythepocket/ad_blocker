@@ -1,7 +1,9 @@
-//TODO: delete debugger functions
+// then figure which easy stuff to use
+// then find more stuff for more ads
 
 let previousToggleState = null;
 let isHandlingToggle = false;
+let isHandlingCheck = false;
 
 //checks to see if user has ad blocker toggled on or off
 function isToggle(callback) {
@@ -10,43 +12,36 @@ function isToggle(callback) {
   });
 }
 
-//debugging to see if button push was trusted
+//debugging to see if button push was trusted (may need for future use)
 function logIfEventIsTrusted(event) {
-  console.log("Event isTrusted:", event.isTrusted);
+  event.addEventListener(
+    "click",
+    console.log("Event isTrusted:", event.isTrusted),
+  );
 }
 
 //gets the target element, since background.js cannot grab DOM, and sends x and y to it
 function simulateClickWithDebugger(targetElement) {
-  console.log(
-    "Received targetElement in simulateClickWithDebugger:",
-    targetElement,
-  );
-
   if (!targetElement) {
     console.error("targetElement is undefined or null");
     return;
   }
 
-  targetElement.addEventListener("click", logIfEventIsTrusted);
   const rect = targetElement.getBoundingClientRect();
   const x = rect.left + rect.width / 2;
   const y = rect.top + rect.height / 2;
-  console.log("Event listener added.");
 
-  chrome.runtime.sendMessage(
-    { text: "click-button-chrome-way", rect: rect, x: x, y: y },
-    (finished) => {
-      console.log("We finished? ", finished); //TODO: delete or catch error
-    },
-  );
+  chrome.runtime.sendMessage({
+    text: "click-button-chrome-way",
+    rect: rect,
+    x: x,
+    y: y,
+  });
 }
 
 //checking to see if video is playing
-function videoPlaying() {
-  console.log("Checking for ads...");
-
+async function videoPlaying() {
   const isAd = document.querySelector(".ad-showing");
-  console.log(isAd ? "Ad is playing" : "No ad detected");
 
   const video = document.querySelector("video");
   if (isAd && video && isFinite(video)) {
@@ -56,19 +51,25 @@ function videoPlaying() {
   //if not, force skipbutton to display push it
   const skipButton = document.querySelector(".ytp-skip-ad-button");
   if (skipButton && !skipButton.disabled && skipButton.offsetParent !== null) {
-    console.log("Skip button found and clickable:", skipButton);
-    simulateClickWithDebugger(skipButton);
+    if (isHandlingCheck) {
+      console.log("videoPlaying is being handled already...skipping");
+      return;
+    }
+
+    isHandlingCheck = true;
+    await simulateClickWithDebugger(skipButton);
     const video = document.querySelector("video");
     if (video) {
-      video.play(); //play video after ad
+      await video.play(); //play video after ad
     }
   } else if (skipButton) {
-    console.log("Skip button found but not clickable:", skipButton);
     skipButton.removeAttribute("aria-hidden");
     skipButton.style.setProperty("disabled", "false", "important");
     skipButton.style.setProperty("display", "flex", "important");
     skipButton.style.setProperty("opacity", "1", "important");
   }
+
+  isHandlingCheck = false;
 
   const overlayCloseButton = document.querySelector(
     ".ytp-ad-overlay-close-button",
@@ -121,7 +122,7 @@ function handleToggle(toggle) {
     try {
       videoPlaying();
     } catch (error) {
-      console.error("Skipping video ad failed"); //you never know
+      console.error("Skipping video ad failed: ", error); //you never know
       isHandlingToggle = false;
     }
   }
