@@ -10,4 +10,4 @@ Version one is still being programmed.
 
 ### Icon Design Disclaimer
 
-This simple icon was designed in Canvas by me, Polly Ruhnke, so all credits go to the Canvas website and five minutes of my time.
+This simple icon was designed in Canvas by me, Polly Ruhnke, so all of the credit goes to the Canvas website and five minutes of my time.
