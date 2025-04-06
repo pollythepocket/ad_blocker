@@ -136,51 +136,75 @@ chrome.storage.onChanged.addListener((changes, areaName) => {
   }
 });
 
+function sendDebuggerCommand(tabId, method, params) {
+  return new Promise((resolve) =>
+    chrome.debugger.sendCommand({ tabId }, method, params, resolve),
+  );
+}
+
+async function attachDebugger(tabId) {
+  await new Promise((resolve) => {
+    chrome.debugger.attach({ tabId }, "1.2", resolve);
+    console.log("Debugger attached.");
+  });
+}
+
+async function detachDebugger(tabId) {
+  await new Promise((resolve) => {
+    chrome.debugger.detach({ tabId }, resolve);
+    console.log(`Detached from tab ${tabId}`);
+  });
+}
+
+async function clickWithDebugger(tabId, msg, sendResponse) {
+  try {
+    await attachDebugger(tabId);
+
+    await sendDebuggerCommand(tabId, "Input.dispatchMouseEvent", {
+      type: "mousePressed",
+      button: "left",
+      x: msg.x,
+      y: msg.y,
+      clickCount: 1,
+    });
+
+    await sendDebuggerCommand(tabId, "Input.dispatchMouseEvent", {
+      type: "mouseReleased",
+      button: "left",
+      x: msg.x,
+      y: msg.y,
+      clickCount: 1,
+    });
+
+    await detachDebugger(tabId);
+    sendResponse({ finished: true });
+  } catch (err) {
+    console.error("Something went wrong: ", err);
+    sendResponse({ finished: false, error: err.message });
+  }
+}
+
 //lets Chrome able to click any button sent this way so isTrusted=true
 chrome.runtime.onMessage.addListener(function (msg, sender, sendResponse) {
-  if (msg.text == "click-button-chrome-way") {
-    chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
-      if (chrome.runtime.lastError) {
-        console.error("Error fetching tabs: ", chrome.runtime.lastError);
-        return;
-      }
-      if (tabs.length === 0) {
-        console.error("No active tab found.");
-        return;
-      }
+  if (msg.text === "click-button-chrome-way") {
+    chrome.tabs.query(
+      { active: true, currentWindow: true },
+      async function (tabs) {
+        if (chrome.runtime.lastError) {
+          console.error("Error fetching tabs: ", chrome.runtime.lastError);
+          return;
+        }
+        if (tabs.length === 0) {
+          console.error("No active tab found.");
+          return;
+        }
 
-      const tabId = tabs[0].id;
-      console.log("Tab ID found:", tabId);
+        const tabId = tabs[0].id;
+        console.log("Tab ID found:", tabId);
 
-      chrome.debugger.attach({ tabId: tabId }, "1.2", function () {
-        console.log("Debugger attached.");
-
-        chrome.debugger.sendCommand(
-          { tabId: tabId },
-          "Input.dispatchMouseEvent",
-          {
-            type: "mousePressed",
-            button: "left",
-            x: msg.x,
-            y: msg.y,
-            clickCount: 1,
-          },
-        );
-
-        chrome.debugger.sendCommand(
-          { tabId: tabId },
-          "Input.dispatchMouseEvent",
-          {
-            type: "mouseReleased",
-            button: "left",
-            x: msg.x,
-            y: msg.y,
-            clickCount: 1,
-          },
-        );
-
-        sendResponse({ finished: true }); //tells youtube.js it has finished
-      });
-    });
+        // Call the main async function
+        await clickWithDebugger(tabId, msg, sendResponse);
+      },
+    );
   }
 });
