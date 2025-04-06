@@ -7,34 +7,81 @@ function isToggle(callback) {
   });
 }
 
-//sets up the quick restrictions
-function toggleOn() {
-  chrome.declarativeNetRequest
-    .updateDynamicRules({
-      removeRuleIds: [1],
-    })
-    .then(() => {
-      chrome.declarativeNetRequest.updateDynamicRules({
-        addRules: [
-          {
-            id: 1,
-            priority: 1,
-            action: { type: "block" },
-            condition: {
-              urlFilter:
-                "doubleclick.net|googleads.g.doubleclick.net|adservice.google.com|ads.yahoo.com|pagead2.googlesyndication.com|ad.doubleclick.net|www.googleadservices.com",
-              resourceTypes: ["script", "xmlhttprequest", "sub_frame", "image"],
-            },
+async function getAllFilesFromRepo() {
+  //all easylist urls
+  const urls = [
+    "https://api.github.com/repos/easylist/easylist/contents/easylist",
+    "https://api.github.com/repos/easylist/easylist/contents/easylist_adult",
+    // "https://api.github.com/repos/easylist/easylist/contents/easylist_cookie",
+    "https://api.github.com/repos/easylist/easylist/contents/easyprivacy",
+    // "https://api.github.com/repos/easylist/easylist/contents/fanboy-addon"
+  ];
+
+  const responses = await Promise.all(urls.map((url) => fetch(url)));
+  const data = await Promise.all(responses.map((response) => response.json()));
+
+  return data;
+}
+
+async function parseFile(file) {
+  function parseEasyListToDNRRules(easyListText) {
+    const lines = easyListText
+      .split("\n")
+      .map((line) => line.trim())
+      .filter((line) => line && !line.startsWith("!"));
+
+    let ruleId = 1;
+    const rules = [];
+
+    for (const line of lines) {
+      const match = line.match(/^\|\|(.+?)\^/);
+      if (match) {
+        rules.push({
+          id: ruleId++,
+          priority: 1,
+          action: { type: "block" },
+          condition: {
+            urlFilter: match[1],
+            resourceTypes: ["main_frame", "sub_frame", "script", "image"],
           },
-        ],
-      });
-    });
+        });
+      }
+    }
+
+    return rules;
+  }
+
+  console.log(file.download_url);
+  const res = await fetch(file.download_url);
+  const text = await res.text();
+
+  const rules = parseEasyListToDNRRules(text);
+
+  chrome.declarativeNetRequest.updateDynamicRules({
+    addRules: rules,
+    removeRuleIds: rules.map((r) => r.id),
+  });
+
+  console.log("Adblock rules updated:", rules.length);
+}
+
+async function toggleOn() {
+  const folders = await getAllFilesFromRepo();
+
+  for (const folder of folders) {
+    for (const file of folder) {
+      await parseFile(file);
+    }
+  }
 }
 
 //turns off quick restrictions
-function toggleOff() {
-  chrome.declarativeNetRequest.updateDynamicRules({
-    removeRuleIds: [1],
+async function toggleOff() {
+  const rules = await chrome.declarativeNetRequest.getDynamicRules();
+  const ruleIds = rules.map((rule) => rule.id);
+
+  await chrome.declarativeNetRequest.updateDynamicRules({
+    removeRuleIds: ruleIds,
   });
 }
 
