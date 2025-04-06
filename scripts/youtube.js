@@ -58,6 +58,10 @@ function videoPlaying() {
   if (skipButton && !skipButton.disabled && skipButton.offsetParent !== null) {
     console.log("Skip button found and clickable:", skipButton);
     simulateClickWithDebugger(skipButton);
+    const video = document.querySelector("video");
+    if (video) {
+      video.play(); //play video after ad
+    }
   } else if (skipButton) {
     console.log("Skip button found but not clickable:", skipButton);
     skipButton.removeAttribute("aria-hidden");
