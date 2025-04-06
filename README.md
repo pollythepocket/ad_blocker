@@ -10,7 +10,7 @@ For now, it is only a Chrome extension, as I believe [UBlock Origin](https://git
 
 Within [scripts/youtube.js](https://github.com/pollythepocket/makeshift_ad_blocker/blob/main/scripts/youtube.js), is the script for both skipping video ads and removing Youtube's built-in ads.
 
---- (Note: At [a certain point](https://github.com/pollythepocket/makeshift_ad_blocker/blob/main/scripts/youtube.js#L34), [background.js](https://github.com/pollythepocket/makeshift_ad_blocker/blob/main/background.js) is called to get around eventIstrusted)
+--- (Note: At [a certain point](https://github.com/pollythepocket/makeshift_ad_blocker/blob/main/scripts/youtube.js#L34), [background.js](https://github.com/pollythepocket/makeshift_ad_blocker/blob/main/background.js) is called to get around [eventIstrusted](https://www.w3schools.com/jsref/event_istrusted.asp))
 
 # Disclaimer
 
