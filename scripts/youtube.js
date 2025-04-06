@@ -7,25 +7,82 @@ function isToggle(callback) {
   });
 }
 
+function simulateClickWithDebugger(targetElement) {
+  const rect = targetElement.getBoundingClientRect();
+  const x = rect.left + rect.width / 2;
+  const y = rect.top + rect.height / 2;
+
+  chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
+    if (tabs.length === 0) {
+      console.error("No active tab found.");
+      return;
+    }
+
+    const tabId = tabs[0].id;
+    chrome.debugger.attach({ tabId: tabId }, "1.2", function () {
+      chrome.debugger.sendCommand(
+        { tabId: tabId },
+        "Input.dispatchMouseEvent",
+        {
+          type: "mousePressed",
+          button: "left",
+          x: x,
+          y: y,
+          clickCount: 1,
+        },
+      );
+
+      chrome.debugger.sendCommand(
+        { tabId: tabId },
+        "Input.dispatchMouseEvent",
+        {
+          type: "mouseReleased",
+          button: "left",
+          x: x,
+          y: y,
+          clickCount: 1,
+        },
+      );
+    });
+  });
+}
+
+// Log whether a click event was trusted
+function logIfEventIsTrusted(event) {
+  console.log("Event isTrusted:", event.isTrusted);
+}
+
+// Function to handle video ad skipping (if vid is playing)
 function videoPlaying() {
   console.log("Checking for ads...");
 
-  // Try to click the skip ad button
+  const isAd = document.querySelector(".ad-showing");
+  console.log(isAd ? "Ad is playing" : "No ad detected");
+
+  const video = document.querySelector("video");
+  if (isAd && video && isFinite(video)) {
+    video.currentTime = video.duration;
+  }
+
   const skipButton = document.querySelector(".ytp-skip-ad-button");
   if (skipButton && !skipButton.disabled && skipButton.offsetParent !== null) {
-    console.log("Skip button found and clickable", skipButton);
-    simulateClick(skipButton);
-  } else {
-    skipButton.style.pointerEvents = "auto";
-    skipButton.style.opacity = "1";
-    skipButton.removeAttribute("disabled");
+    console.log("Skip button found and clickable:", skipButton);
+    skipButton.addEventListener("click", logIfEventIsTrusted);
+    simulateClickWithDebugger(skipButton);
+  } else if (skipButton) {
+    console.log("Skip button found but not clickable:", skipButton);
+    skipButton.removeAttribute("aria-hidden");
+    skipButton.style.setProperty("disabled", "false", "important");
+    skipButton.style.setProperty("display", "flex", "important");
+    skipButton.style.setProperty("opacity", "1", "important");
   }
 
   const overlayCloseButton = document.querySelector(
     ".ytp-ad-overlay-close-button",
   );
   if (overlayCloseButton) {
-    console.log("Overlay close button found", overlayCloseButton);
+    console.log("Overlay close button found:", overlayCloseButton);
+    overlayCloseButton.addEventListener("click", logIfEventIsTrusted);
     overlayCloseButton.click();
   }
 }
@@ -37,8 +94,6 @@ function handleToggle(toggle) {
   const exisitingIds = document.querySelectorAll("#player-ads");
 
   const allAds = [...adElements, ...exisitingIds];
-
-  // console.log(allAds);
 
   if (allAds.length > 0) {
     requestAnimationFrame(() => {
@@ -61,12 +116,7 @@ function handleToggle(toggle) {
   }
 
   if (toggle) {
-    let adCheckInterval = setInterval(() => {
-      if (document.querySelector(".ytp-skip-ad-button")) {
-        videoPlaying();
-        clearInterval(adCheckInterval);
-      }
-    }, 500);
+    videoPlaying();
   }
 }
 
