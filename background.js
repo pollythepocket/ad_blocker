@@ -10,9 +10,7 @@ async function getAllFilesFromRepo() {
   const urls = [
     "https://api.github.com/repos/easylist/easylist/contents/easylist",
     "https://api.github.com/repos/easylist/easylist/contents/easylist_adult",
-    // "https://api.github.com/repos/easylist/easylist/contents/easylist_cookie",
     "https://api.github.com/repos/easylist/easylist/contents/easyprivacy",
-    // "https://api.github.com/repos/easylist/easylist/contents/fanboy-addon"
   ];
 
   const responses = await Promise.all(urls.map((url) => fetch(url)));
