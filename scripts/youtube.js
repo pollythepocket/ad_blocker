@@ -1,4 +1,8 @@
-//TODO: delete debugger functions
+//TODO: delete debugger functions, delete logging, make video play after ad
+// then figure which easy stuff to use
+// then find more stuff for more ads
+// maybe skipping all ad vid??
+//when debugger attaches make sure it doesnt do a pop-up
 
 let previousToggleState = null;
 let isHandlingToggle = false;
@@ -10,28 +14,24 @@ function isToggle(callback) {
   });
 }
 
-//debugging to see if button push was trusted
+//debugging to see if button push was trusted (may need for future use)
 function logIfEventIsTrusted(event) {
-  console.log("Event isTrusted:", event.isTrusted);
+  event.addEventListener(
+    "click",
+    console.log("Event isTrusted:", event.isTrusted),
+  );
 }
 
 //gets the target element, since background.js cannot grab DOM, and sends x and y to it
 function simulateClickWithDebugger(targetElement) {
-  console.log(
-    "Received targetElement in simulateClickWithDebugger:",
-    targetElement,
-  );
-
   if (!targetElement) {
     console.error("targetElement is undefined or null");
     return;
   }
 
-  targetElement.addEventListener("click", logIfEventIsTrusted);
   const rect = targetElement.getBoundingClientRect();
   const x = rect.left + rect.width / 2;
   const y = rect.top + rect.height / 2;
-  console.log("Event listener added.");
 
   chrome.runtime.sendMessage(
     { text: "click-button-chrome-way", rect: rect, x: x, y: y },
@@ -43,8 +43,6 @@ function simulateClickWithDebugger(targetElement) {
 
 //checking to see if video is playing
 function videoPlaying() {
-  console.log("Checking for ads...");
-
   const isAd = document.querySelector(".ad-showing");
   console.log(isAd ? "Ad is playing" : "No ad detected");
 
@@ -56,14 +54,12 @@ function videoPlaying() {
   //if not, force skipbutton to display push it
   const skipButton = document.querySelector(".ytp-skip-ad-button");
   if (skipButton && !skipButton.disabled && skipButton.offsetParent !== null) {
-    console.log("Skip button found and clickable:", skipButton);
     simulateClickWithDebugger(skipButton);
     const video = document.querySelector("video");
     if (video) {
       video.play(); //play video after ad
     }
   } else if (skipButton) {
-    console.log("Skip button found but not clickable:", skipButton);
     skipButton.removeAttribute("aria-hidden");
     skipButton.style.setProperty("disabled", "false", "important");
     skipButton.style.setProperty("display", "flex", "important");
@@ -121,7 +117,7 @@ function handleToggle(toggle) {
     try {
       videoPlaying();
     } catch (error) {
-      console.error("Skipping video ad failed"); //you never know
+      console.error("Skipping video ad failed: ", error); //you never know
       isHandlingToggle = false;
     }
   }
