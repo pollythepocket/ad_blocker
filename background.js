@@ -5,28 +5,39 @@ function isToggle(callback) {
   });
 }
 
+//this gets all of the files from a github repo itself, with the lists of urls
 async function getAllFilesFromRepo() {
   //all easylist urls
   const urls = [
+    "https://api.github.com/repos/pollythepocket/makeshift_ad_blocker/custom-filter",
+    "https://api.github.com/repos/uBlockOrigin/uAssets/contents/filters",
     "https://api.github.com/repos/easylist/easylist/contents/easylist",
     "https://api.github.com/repos/easylist/easylist/contents/easylist_adult",
     "https://api.github.com/repos/easylist/easylist/contents/easyprivacy",
   ];
 
-  const responses = await Promise.all(urls.map((url) => fetch(url)));
+  const responses = await Promise.all(
+    urls.map((url) =>
+      fetch(url, {
+        headers: {
+          Authorization: `token PUT_IN_GITHUB_TOKEN`,
+        },
+      }),
+    ),
+  );
   const data = await Promise.all(responses.map((response) => response.json()));
 
   return data;
 }
 
-async function parseFile(file) {
+async function parseEasyFile(file) {
   function parseEasyListToDNRRules(easyListText) {
     const lines = easyListText
       .split("\n")
       .map((line) => line.trim())
       .filter((line) => line && !line.startsWith("!"));
 
-    let ruleId = 1;
+    let ruleId = 2;
     const rules = [];
 
     for (const line of lines) {
@@ -38,7 +49,21 @@ async function parseFile(file) {
           action: { type: "block" },
           condition: {
             urlFilter: match[1],
-            resourceTypes: ["main_frame", "sub_frame", "script", "image"],
+            resourceTypes: [
+              "csp_report",
+              "font",
+              "image",
+              "main_frame",
+              "media",
+              "object",
+              "other",
+              "ping",
+              "script",
+              "sub_frame",
+              "webbundle",
+              "websocket",
+              "webtransport",
+            ],
           },
         });
       }
@@ -47,7 +72,6 @@ async function parseFile(file) {
     return rules;
   }
 
-  console.log(file.download_url);
   const res = await fetch(file.download_url);
   const text = await res.text();
 
@@ -63,11 +87,31 @@ async function parseFile(file) {
 
 //turns on quick restrictions
 async function toggleOn() {
+  chrome.declarativeNetRequest.updateDynamicRules({
+    addRules: [
+      {
+        id: 1,
+        priority: 1,
+        action: {
+          type: "redirect",
+          redirect: {
+            url: "https://oldsite.example.com",
+          },
+        },
+        condition: {
+          urlFilter: "*",
+          resourceTypes: ["main_frame"],
+        },
+      },
+    ],
+    removeRuleIds: [1],
+  });
+
   const folders = await getAllFilesFromRepo();
 
   for (const folder of folders) {
     for (const file of folder) {
-      await parseFile(file);
+      await parseEasyFile(file);
     }
   }
 }

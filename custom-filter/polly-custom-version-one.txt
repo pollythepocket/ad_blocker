@@ -1,0 +1,3 @@
+@@||designtaxi.com$script
+||designtaxi.com/js/interstital-redirector.js?*
+||tracking-redirect.com^$document

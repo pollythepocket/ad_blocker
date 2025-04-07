@@ -2,7 +2,7 @@
 
 Makeshift Ad Blocker was created in response to many of my favorite ad blockers no longer being supported by Chrome. I thought, why not create my own?
 
-For now, it is only a Chrome extension, as I believe [UBlock Origin](https://github.com/gorhill/uBlock) is the optimal Ad Block for other browsers, and, as a sort of inspiration, by default blocks pop-ups, malware sites, ads, and etc. using [EasyList](https://easylist.to/#easylist), [EasyPrivacy](https://easylist.to/#easyprivacy), and [EasyList_Adult](https://github.com/easylist/easylist/tree/master/easylist_adult).
+For now, it is only a Chrome extension, as I believe [UBlock Origin](https://github.com/gorhill/uBlock) is the optimal Ad Block for other browsers, and, as a sort of inspiration, by default blocks pop-ups, malware sites, ads, and etc. using [EasyList](https://easylist.to/#easylist), [EasyPrivacy](https://easylist.to/#easyprivacy), [EasyList_Adult](https://github.com/easylist/easylist/tree/master/easylist_adult), and [UBlock Origin filters](https://github.com/uBlockOrigin/uAssets/tree/master/filters).
 
 ## Specfic Sites where further scripts were needed (Opensource for others idc)
 
